@@ -1,26 +1,24 @@
 version: 0.2
 
 phases:
-  install:
-    commands:
-      - echo Installing dependencies...
   pre_build:
     commands:
       - echo Logging in to Amazon ECR...
-      - aws ecr get-login-password --region $AWS_REGION | docker login --username AWS --password-stdin $AWS_ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com
+      - aws ecr get-login-password --region us-east-1 | docker login --username AWS --password-stdin 590184053494.dkr.ecr.us-east-1.amazonaws.com
   build:
     commands:
       - echo Building the Docker image...
-      - docker build -t my-repo:$CODEBUILD_RESOLVED_SOURCE_VERSION .
+      - docker build -t mishra/flask-app .
       - echo Tagging the Docker image...
-      - docker tag my-repo:$CODEBUILD_RESOLVED_SOURCE_VERSION $AWS_ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com/my-repo:$CODEBUILD_RESOLVED_SOURCE_VERSION
-      - echo Pushing the Docker image to ECR...
-      - docker push $AWS_ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com/my-repo:$CODEBUILD_RESOLVED_SOURCE_VERSION
-      - echo '[ { "name": "my-container", "imageUri": "$AWS_ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com/my-repo:$CODEBUILD_RESOLVED_SOURCE_VERSION" } ]' > imagedefinitions.json
+      - docker tag mishra/flask-app:latest 590184053494.dkr.ecr.us-east-1.amazonaws.com/mishra/flask-app:latest
+      - echo '[ { "name": "my-container", "imageUri": "590184053494.dkr.ecr.us-east-1.amazonaws.com/mishra/flask-app:latest" } ]' > imagedefinitions.json
   post_build:
     commands:
-      - echo Build completed!
+      - echo Pushing the Docker image to Amazon ECR...
+      - docker push 590184053494.dkr.ecr.us-east-1.amazonaws.com/mishra/flask-app:latest
+      - echo Build process completed.
 
 artifacts:
   files:
+    - '**/*'
     - imagedefinitions.json
