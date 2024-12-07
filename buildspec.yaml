@@ -1,14 +1,26 @@
 version: 0.2
+
 phases:
+  install:
+    commands:
+      - echo Installing dependencies...
   pre_build:
     commands:
       - echo Logging in to Amazon ECR...
-      - aws ecr get-login-password --region $AWS_DEFAULT_REGION | docker login --username AWS --password-stdin <your_ecr_repository_url>
+      - aws ecr get-login-password --region $AWS_REGION | docker login --username AWS --password-stdin $AWS_ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com
   build:
     commands:
       - echo Building the Docker image...
-      - docker build -t lastname-app .
-      - echo Tagging the image...
-      - docker tag lastname-app:latest <your_ecr_repository_url>/lastname-app:latest
+      - docker build -t my-repo:$CODEBUILD_RESOLVED_SOURCE_VERSION .
+      - echo Tagging the Docker image...
+      - docker tag my-repo:$CODEBUILD_RESOLVED_SOURCE_VERSION $AWS_ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com/my-repo:$CODEBUILD_RESOLVED_SOURCE_VERSION
       - echo Pushing the Docker image to ECR...
-      - docker push <your_ecr_repository_url>/lastname-app:latest
+      - docker push $AWS_ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com/my-repo:$CODEBUILD_RESOLVED_SOURCE_VERSION
+      - echo '[ { "name": "my-container", "imageUri": "$AWS_ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com/my-repo:$CODEBUILD_RESOLVED_SOURCE_VERSION" } ]' > imagedefinitions.json
+  post_build:
+    commands:
+      - echo Build completed!
+
+artifacts:
+  files:
+    - imagedefinitions.json
